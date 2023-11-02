@@ -98,7 +98,4 @@ incarcata. Daca avem memoria alocata aceasta este eliberata cu functia
 avem.
 
 Comanda ROTATE:
-    Aici din pacate nu am reusit sa o repar. M-am gandit ca deoarece toate
-unghiurile sunt multipli de 90 pot folosi o singura comanda pentru asta si sa 
-o aplic de mai multe ori. SEGMENTATION FAULT. Cred ca stiu de ce dar nu am mai
-avut timp sa repar.
+    WORK IN PROGRESS
