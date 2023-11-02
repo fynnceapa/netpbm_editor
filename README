@@ -1,0 +1,104 @@
+#######Stan Andrei Razvan 313CA 2022
+
+Am codat un editor de imagini de format PGM sau PPM. Acest format contine un
+header (format dintr-un magic word care reprezinta tipul imaginii, dimensiunile
+imaginii si valoarea maxima a pixelilor) si valorile pixelilor in format ascii
+sau binare.
+
+Editorul va salva datele header-ului intr-o structura de tipul Image si, in
+functie de tipul imaginii, va salva valorile pixelilor intr-o matrice de pixeli:
+    -matricea graypixels pentru imagini grayscale (p2 sau p5);
+    -matricea de tipul RGB, rgbpixels, pentru imagini color (p3 sau p6) cu
+    valori pentru fiecare culoare (red, greeb, blue);
+
+Editorul meu poate efectua mai multe operatii asupra acestor imagini.
+
+Comanda LOAD:
+    Am implementat aceasta comanda intr-un mod direct. Mai intai se citeste
+header-ul si se determina tipul de imagine (prin comenzile load_img_header si
+what_type). Mai apoi, in functie de tipul de imagine voi incarca matricea de
+pixeli. 
+    -Daca avem o imagine de tipul P2 citirea este pur si simplu o citire de
+    matrice dintr-un fisier. 
+    -Daca avem o imagine de tipul P5 citirea se va face folosind fread.
+    -Daca avem o imagine de tipul P3 citirea se va face 3 cate 3 in ordinea R, 
+    G, B. De aceea am folosit al treilea for, ca sa pot determina valoarea carei
+    culori o citesc.
+    -Daca avem o imagine de tipul P6 citirea se va face cu fread;
+Tot in cadrul comenzii LOAD, am eliberat mereu memoria alocata pentru imaginea
+veche folosindu-ma de variabilele de tipul old_* care retin datele imaginii vechi.
+In cazul in care nu se poate deschide o imagine se revine la starea in care nu
+exita nicio imagine in memorie.
+
+Comanda SAVE:
+    Aceasta comanda salveaza imaginea curenta. Am gandit aceasta comanda ca fiind
+opusul comenzii LOAD. Astfel, mai intai se scriu in fisier datele din structura,
+adica magic number-ul, dimensiunile si valoarea maxima. Apoi, iarasi in functie
+de tipul de imagine cu care lucram se va face scrierea in fisier (folosind fwrite
+pentru binare si fprintf pentru cele ascii). 
+    Daca este prezent parametrul ascii, se schimba local tipul de imagine, daca
+este cazul (din binar in ascii) prin intermediul functiei change_type_ascii
+pentru a se putea realiza salvarea de tipul dorit folosind doar functia save_img.
+Daca parametrul ascii este absent, salvarea se va realiza binar indiferent de
+tipul imaginii (idem se foloseste change_type_bin). Se revine apoi la tipul vechi.
+
+Comanda SELECT:
+    Aceasta comanda trebuie sa primeasca coordonatele unei selectii in cadrul
+imaginii. Functia selection se ocupa de aceasta comanda. Tine cont de MULTELE 
+erori si cazuri care pot aparea. Daca selectia a fost reusita urmatoarele
+comenzi vor avea loc doar pe selectie. Aici am preferatsa salvez doar coordonatele
+acestei selectii, fara a mai face o copie a pixelilor acesteia. Daca selectia
+este 0 pentru toate cele 4 valori atunci este selectata intreaga imagine.
+
+Comanda SELECT ALL:
+    Face toate cele 4 valor 0. ;)
+
+Comanda CROP:
+    Aici, daca se trece de MULTITUDINEA de cazuri in care nu se intampla nimic
+si doar se afiseaza "Image cropped" sau un mesaj de eroare, selectia devine noua
+imagine. Astfel ca, realoc memoria imaginii si copiez pixelii dintr-o matrice
+buffer inapoi in matricea initiala.
+    Din nou, am implementat in functie de tipul imagii, deci am doua functii
+(crop_image_gray si crop_image_color) la care este diferit doar tipul de date
+cu care lucram.
+
+Comanda HISTOGRAM:
+    Aceasta comanda primeste doua variabile x si y care reprezinta numarul de
+stelute, respectiv numarul de binuri al histogramei. Am tratat histograma ca pe
+un vector de frecventa pentru valorile pixelilor (de la 0 la 255). Din cauza ca
+avem un numar specific de bin-uri, variabila 'perioada' reprezinta din cate in
+cate elemente se calculeaza histograma. Apoi se cauta valoarea maxima si se
+afiseaza x * valoarea_calculata / maxim stelute.
+
+Comanda EQUALIZE:
+    Aici am calculat un vector de frecventa pentru toate elementele, fara a mai
+imparti la nimic (practic histograma cu 256 de bin-uri) si apoi am aplicat
+formula din enuntul temei.
+
+Comanda APPLY:
+    Mai intai verific cu functie 'check_apply' daca comanda primita este valida
+si ce fel de filtru trebuie sa aplic. Filtrele le aplic cu functia
+'apply_kernel_in_temp' pe copia intregii imagini. Aceasta functie primeste
+kernel-ul specific fiecarui filtru si se "plimba" in cadrane de cate 3x3
+elemente, fara marginea de un pixel deoarece pixelii de acolo nu au destui vecini.
+Mai apoi, daca avem selectie, se copiaza in imaginea originala doar pixelii
+selectati (evitandu-se marginea de un pixel in caz ca aceasta este selectata).
+Am facut toate calculele folosind tipul double. Am implementat si functia clamp
+pentru cazul in care aplicarea kernel-ului da valori din afara intervalului [0, 255]
+si am rotunjit toate rezultatele cu round.
+
+Comanda EXIT:
+    Aceasta comanda este cea care opreste programul, deci trebuie sa elibereze
+toata memoria alocata. In cazul in care nu avem nicio imagine incarcata,
+inseamna ca nu avem nici memoria alocata deoarece comanda LOAD elibereaza si ea
+memorie atunci cand nu s-a putut incarca o imagine sau atunci cand incarcam o
+imagine noua (cea veche este eliberata). Asa ca putem avea o singura imagine
+incarcata. Daca avem memoria alocata aceasta este eliberata cu functia
+'my_free_pixels' care elibereaza memoria in functie de tipul imaginii pe care o
+avem.
+
+Comanda ROTATE:
+    Aici din pacate nu am reusit sa o repar. M-am gandit ca deoarece toate
+unghiurile sunt multipli de 90 pot folosi o singura comanda pentru asta si sa 
+o aplic de mai multe ori. SEGMENTATION FAULT. Cred ca stiu de ce dar nu am mai
+avut timp sa repar.
